@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'model/Question.dart';
 
@@ -48,40 +49,53 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Flutter Dynamic List App'),
+        title: Text(
+          'Flutter Dynamic List App',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.blue,
       ),
       body: ListView.builder(
         controller: _scrollController,
         itemCount: _currentQuestionIndex + 1, // Show only answered questions
         itemBuilder: (context, index) {
           if (index >= _questions.length) {
-            print("Button");
             return SubmitCard();
           } else {
-            return QuestionCard(
-              question: _questions[index],
-              onOptionSelected: (selectedOption) {
-                setState(() {
-                  _selectedOptions[index] = selectedOption;
-                });
-                print("Question");
-                // Move to the next question after the current one is answered
-                if (selectedOption != null) {
-                  // Check if there are more questions to display
-                  if (_currentQuestionIndex < _questions.length) {
-                    setState(() {
-                      _currentQuestionIndex++;
-                      //   print("_currentQuestionIndex: $_currentQuestionIndex");
-                    });
+            if (_questions[index].questionType == "MultipleChoice") {
+              return QuestionCard(
+                question: _questions[index],
+                onOptionSelected: (selectedOption) {
+                  setState(() {
+                    _selectedOptions[index] = selectedOption;
+                  });
+                  // Move to the next question after the current one is answered
+                  if (selectedOption != null) {
+                    // Check if there are more questions to display
+                    if (_currentQuestionIndex < _questions.length) {
+                      setState(() {
+                        _currentQuestionIndex++;
+                        //   print("_currentQuestionIndex: $_currentQuestionIndex");
+                      });
 
-                    WidgetsBinding.instance?.addPostFrameCallback((_) {
-                      _scrollToNextPosition();
-                    });
-                  } else {}
-                }
-              },
-              scrollController: _scrollController,
-            );
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _scrollToNextPosition();
+                      });
+                    } else {}
+                  }
+                },
+                scrollController: _scrollController,
+              );
+            } else if (_questions[index].questionType == "textInput") {
+              return TextInputCard(
+                question: _questions[index],
+                onNextPressed: (){
+                  _moveToNextQuestion();
+                },
+              );
+            } else if (_questions[index].questionType == "checkBox") {
+              print("CheckBox");
+            } else if (_questions[index].questionType == "numberInput") {}
           }
         },
       ),
@@ -91,8 +105,81 @@ class _QuizScreenState extends State<QuizScreen> {
   void _scrollToNextPosition() {
     _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOut,
+    );
+  }
+
+  void _moveToNextQuestion() {
+    setState(() {
+      if (_currentQuestionIndex < _questions.length) {
+        _currentQuestionIndex++;
+      }
+    });
+  }
+}
+
+class TextInputCard extends StatefulWidget {
+  final Question question;
+  final VoidCallback onNextPressed; // Add this line
+  TextInputCard({
+    required this.question,
+    required this.onNextPressed, // Add this line
+
+  });
+
+  @override
+  State<TextInputCard> createState() => _TextInputCardState();
+}
+
+class _TextInputCardState extends State<TextInputCard> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.question.questionText,
+            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(
+            height: 12,
+          ),
+          TextField(
+            textAlign: TextAlign.left,
+            keyboardType: TextInputType.text,
+            decoration: InputDecoration(
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+              isDense: true,
+            ),
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: MaterialButton(
+              onPressed: widget.onNextPressed,
+              height: 40,
+              minWidth: 100,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              child: Text("Next", style: TextStyle(color: Colors.white)),
+              color: Colors.blue,
+            ),
+          )
+        ],
+      ),
     );
   }
 }
@@ -101,7 +188,6 @@ class QuestionCard extends StatefulWidget {
   final Question question;
   final ValueChanged<int?> onOptionSelected;
   final ScrollController scrollController; // Add this line'
-
 
   QuestionCard({
     required this.question,
@@ -127,7 +213,7 @@ class _QuestionCardState extends State<QuestionCard> {
             widget.question.questionText,
             style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 16.0),
+          SizedBox(height: 20.0),
           ListView.builder(
             controller: widget.onOptionSelected != null
                 ? null
