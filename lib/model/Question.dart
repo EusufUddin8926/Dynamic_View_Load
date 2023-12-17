@@ -1,35 +1,51 @@
 class Question {
+  final int id;
   final String questionText;
   final List<String> options;
   final String questionType;
+  final String referTo;
 
   Question({
+    required this.id,
     required this.questionText,
     required this.options,
     required this.questionType,
+    required this.referTo,
   });
 
-  static List<Question> getQuestionList(){
+  static List<Question> getQuestionList() {
     List<Question> _questions = [
       Question(
-          questionText: 'What is the capital of France?',
-          options: ['Berlin', 'Paris', 'Madrid', 'Rome'],
-          questionType: "MultipleChoice"),
+        id: 1,
+        questionText: 'What is the capital of France?',
+        options: ['Berlin', 'Paris', 'Madrid', 'Rome'],
+        questionType: "MultipleChoice",
+        referTo: "3",
+      ),
       Question(
-          questionText:
-          'Which programming language is used for Android Development',
-          options: [],
-          questionType: "textInput"),
+        id: 1,
+        questionText:
+            'Which programming language is used for Android Development',
+        options: [],
+        questionType: "textInput",
+        referTo: "2",
+      ),
 
       Question(
-          questionText: 'Which programming language is your favourite?',
-          options: ['Java', 'Dart', 'Python', 'C#'],
-          questionType: "checkBox"),
+        id: 1,
+        questionText: 'Which programming language is your favourite?',
+        options: ['Java', 'Dart', 'Python', 'C#'],
+        questionType: "checkBox",
+        referTo: "4",
+      ),
 
       Question(
-          questionText: 'Give the rating for your favourite language?',
-          options: [],
-          questionType: "numberInput"),
+        id: 1,
+        questionText: 'Give the rating for your favourite language?',
+        options: [],
+        questionType: "numberInput",
+        referTo: "3",
+      ),
       // Add more questions as needed
     ];
     return _questions;

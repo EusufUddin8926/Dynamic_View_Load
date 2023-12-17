@@ -35,8 +35,9 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   int _currentQuestionIndex = 0;
   var _questions = Question.getQuestionList();
-  List<int?> _selectedOptions = List.filled(4, null);
+  final List<int?> _selectedOptions = List.filled(4, null);
   ScrollController _scrollController = ScrollController();
+  int jsonPosition = 0;
 
   @override
   void initState() {
@@ -49,7 +50,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Flutter Dynamic List App',
           style: TextStyle(color: Colors.white),
         ),
@@ -60,7 +61,7 @@ class _QuizScreenState extends State<QuizScreen> {
         itemCount: _currentQuestionIndex + 1, // Show only answered questions
         itemBuilder: (context, index) {
           if (index >= _questions.length) {
-            return SubmitCard();
+            return const SubmitCard();
           } else {
             if (_questions[index].questionType == "MultipleChoice") {
               return QuestionCard(
@@ -90,12 +91,14 @@ class _QuizScreenState extends State<QuizScreen> {
               return TextInputCard(
                 question: _questions[index],
                 onNextPressed: (){
-                  _moveToNextQuestion();
+                  _moveToNextQuestion(_questions, );
                 },
               );
             } else if (_questions[index].questionType == "checkBox") {
-              print("CheckBox");
-            } else if (_questions[index].questionType == "numberInput") {}
+
+            } else if (_questions[index].questionType == "numberInput") {
+
+            }
           }
         },
       ),
@@ -110,12 +113,19 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  void _moveToNextQuestion() {
+  void _moveToNextQuestion(List<Question> questions) {
     setState(() {
       if (_currentQuestionIndex < _questions.length) {
         _currentQuestionIndex++;
+        for(int i = 0;i < questions.length; i++){
+
+        }
       }
     });
+  }
+
+  void initialRoute() {
+
   }
 }
 
