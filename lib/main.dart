@@ -44,29 +44,28 @@ class _QuizScreenState extends State<QuizScreen> {
     Question(
       id: 2,
       questionText: 'Which programming language is used for Android Development',
-      options: [],
+      options: ['Java', 'Dart', 'Python', 'C#'],
       questionType: "textInput",
-      referTo: "2",
+      referTo: "4",
     ),
     Question(
       id: 3,
       questionText: 'Which programming language is your favourite?',
-      options: ['Java', 'Dart', 'Python', 'C#'],
-      questionType: "checkBox",
-      referTo: "4",
+      options: [],
+      questionType: "textInput",
+      referTo: "2",
     ),
     Question(
       id: 4,
       questionText: 'Give the rating for your favourite language?',
       options: [],
       questionType: "numberInput",
-      referTo: "3",
+      referTo: "Submit",
     ),
   ];
 
   int _currentQuestionIndex = 0;
   List<int?> _selectedOptions = List.filled(4, null);
-  TextEditingController _textEditingController = TextEditingController();
   ScrollController _scrollController = ScrollController();
 
   @override
@@ -87,46 +86,59 @@ class _QuizScreenState extends State<QuizScreen> {
         backgroundColor: Colors.blue,
       ),
       body: ListView.builder(
+        addAutomaticKeepAlives: true,
         itemCount: _currentQuestionIndex + 1,
         itemBuilder: (context, index) {
           if (index >= _questions.length) {
             return SubmitCard();
           } else {
-            if (_questions[index].questionType == "MultipleChoice") {
-              return QuestionCard(
-                question: _questions[index],
-                onOptionSelected: (selectedOption) {
-                  setState(() {
-                    _selectedOptions[index] = selectedOption;
-                  });
-                  if (selectedOption != null) {
-                    if (_currentQuestionIndex < _questions.length) {
-                      setState(() {
-                        _currentQuestionIndex++;
-                      });
-                      WidgetsBinding.instance?.addPostFrameCallback((_) {
-                        _scrollToNextPosition();
-                      });
-                    }
-                  }
-                },
-              );
-            } else if (_questions[index].questionType == "textInput") {
-              return TextInputCard(
-                question: _questions[index],
-                onTextChanged: (text) {
-                  // Handle text changes, if needed
-                },
-                onNextPressed: () {
-                  _moveToNextQuestion();
-                },
-              );
-            }
+            return buildQuestionWidget(_questions[index]);
           }
-          return Container();
         },
       ),
     );
+  }
+
+  Widget buildQuestionWidget(Question question) {
+    switch (question.questionType) {
+      case "MultipleChoice":
+        return QuestionCard(
+          question: question,
+          onOptionSelected: (selectedOption) {
+            setState(() {
+              _selectedOptions[_currentQuestionIndex] = selectedOption;
+            });
+            if (selectedOption != null) {
+              _moveToNextQuestion(question.referTo);
+            }
+          },
+          scrollController: _scrollController,
+        );
+      case "textInput":
+        return TextInputCard(
+          question: question,
+          onTextChanged: (text) {
+            // Handle text changes, if needed
+          },
+          onNextPressed: () {
+            _moveToNextQuestion(question.referTo);
+          },
+        );
+      case "checkBox":
+      // Handle checkBox case
+        break;
+      case "numberInput":
+        return NumberInputCard(
+          question: question,
+          onTextChanged: (number) {
+            // Handle number changes, if needed
+          },
+          onNextPressed: () {
+            _moveToNextQuestion(question.referTo);
+          },
+        );
+    }
+    return Container();
   }
 
   void _scrollToNextPosition() {
@@ -137,19 +149,26 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  void _moveToNextQuestion() {
-    setState(() {
-      if (_currentQuestionIndex < _questions.length) {
+  void _moveToNextQuestion(String referTo) {
+    int nextQuestionIndex = _findQuestionIndex(referTo);
+
+    if (nextQuestionIndex != -1) {
+      setState(() {
+        _currentQuestionIndex = nextQuestionIndex;
+        _scrollToNextPosition();
+      });
+    } else if (referTo == "Submit") {
+      // Handle the case where the next question is the Submit screen
+      setState(() {
         _currentQuestionIndex++;
-        int nextQuestionIndex = _findQuestionIndex(_questions[_currentQuestionIndex].referTo);
-        if (nextQuestionIndex != -1) {
-         // _textEditingController.text = _answers[nextQuestionIndex];
-        }
-      }
-    });
+        _scrollToNextPosition();
+      });
+    } else {
+      print("Next question not found for referTo: $referTo");
+    }
   }
 
-  int _findQuestionIndex(String referTo) {
+ int _findQuestionIndex(String referTo) {
     for (int i = 0; i < _questions.length; i++) {
       if (_questions[i].id.toString() == referTo) {
         return i;
@@ -159,13 +178,16 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 }
 
+
 class QuestionCard extends StatelessWidget {
   final Question question;
   final ValueChanged<int?> onOptionSelected;
+  final ScrollController scrollController;
 
   QuestionCard({
     required this.question,
     required this.onOptionSelected,
+    required this.scrollController,
   });
 
   @override
@@ -182,7 +204,7 @@ class QuestionCard extends StatelessWidget {
           ),
           SizedBox(height: 20.0),
           ListView.builder(
-            controller: _scrollController,
+            controller: scrollController,
             shrinkWrap: true,
             itemCount: question.options.length,
             itemBuilder: (context, index) {
@@ -202,7 +224,7 @@ class QuestionCard extends StatelessWidget {
 
 class TextInputCard extends StatefulWidget {
   final Question question;
-  final ValueChanged<String?> onTextChanged;
+  final ValueChanged<int?> onTextChanged;
   final VoidCallback onNextPressed;
 
   TextInputCard({
@@ -249,6 +271,81 @@ class _TextInputCardState extends State<TextInputCard> {
               isDense: true,
             ),
             onChanged: (text) {
+              widget.onTextChanged(text as int?);
+            },
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: MaterialButton(
+              onPressed: widget.onNextPressed,
+              height: 40,
+              minWidth: 100,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              child: Text("Next", style: TextStyle(color: Colors.white)),
+              color: Colors.blue,
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+
+
+class NumberInputCard extends StatefulWidget {
+  final Question question;
+  final ValueChanged<String?> onTextChanged;
+  final VoidCallback onNextPressed;
+
+  NumberInputCard({
+    required this.question,
+    required this.onTextChanged,
+    required this.onNextPressed,
+  });
+
+  @override
+  _NumberInputCardState createState() => _NumberInputCardState();
+}
+
+class _NumberInputCardState extends State<NumberInputCard> {
+  TextEditingController _textEditingController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.question.questionText,
+            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(
+            height: 12,
+          ),
+          TextField(
+            controller: _textEditingController,
+            textAlign: TextAlign.left,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+              isDense: true,
+            ),
+            onChanged: (text) {
               widget.onTextChanged(text);
             },
           ),
@@ -272,6 +369,9 @@ class _TextInputCardState extends State<TextInputCard> {
     );
   }
 }
+
+
+
 
 class OptionItem extends StatelessWidget {
   final String option;

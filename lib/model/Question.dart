@@ -28,15 +28,15 @@ class Question {
             'Which programming language is used for Android Development',
         options: [],
         questionType: "textInput",
-        referTo: "2",
+        referTo: "4",
       ),
 
       Question(
         id: 3,
         questionText: 'Which programming language is your favourite?',
-        options: ['Java', 'Dart', 'Python', 'C#'],
-        questionType: "checkBox",
-        referTo: "4",
+        options: [],
+        questionType: "textInput",
+        referTo: "2",
       ),
 
       Question(
@@ -44,7 +44,7 @@ class Question {
         questionText: 'Give the rating for your favourite language?',
         options: [],
         questionType: "numberInput",
-        referTo: "3",
+        referTo: "Submit",
       ),
       // Add more questions as needed
     ];
