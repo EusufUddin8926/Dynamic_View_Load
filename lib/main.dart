@@ -26,83 +26,102 @@ class MyApp extends StatelessWidget {
 }
 
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key});
+  const QuizScreen({Key? key}) : super(key: key);
 
   @override
-  State<QuizScreen> createState() => _QuizScreenState();
+  _QuizScreenState createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends State<QuizScreen> {
+  List<Question> _questions = [
+    Question(
+      id: 1,
+      questionText: 'What is the capital of France?',
+      options: ['Berlin', 'Paris', 'Madrid', 'Rome'],
+      questionType: "MultipleChoice",
+      referTo: "3",
+    ),
+    Question(
+      id: 2,
+      questionText: 'Which programming language is used for Android Development',
+      options: [],
+      questionType: "textInput",
+      referTo: "2",
+    ),
+    Question(
+      id: 3,
+      questionText: 'Which programming language is your favourite?',
+      options: ['Java', 'Dart', 'Python', 'C#'],
+      questionType: "checkBox",
+      referTo: "4",
+    ),
+    Question(
+      id: 4,
+      questionText: 'Give the rating for your favourite language?',
+      options: [],
+      questionType: "numberInput",
+      referTo: "3",
+    ),
+  ];
+
   int _currentQuestionIndex = 0;
-  var _questions = Question.getQuestionList();
-  final List<int?> _selectedOptions = List.filled(4, null);
-  ScrollController _scrollController = ScrollController();
-  int jsonPosition = 0;
+  List<int?> _selectedOptions = List.filled(4, null);
+  TextEditingController _textEditingController = TextEditingController();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _scrollController = ScrollController();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Flutter Dynamic List App',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blue,
       ),
       body: ListView.builder(
-        controller: _scrollController,
-        itemCount: _currentQuestionIndex + 1, // Show only answered questions
+        itemCount: _currentQuestionIndex + 1,
         itemBuilder: (context, index) {
           if (index >= _questions.length) {
-            return const SubmitCard();
+            return SubmitCard();
           } else {
-            if (_questions[jsonPosition].questionType == "MultipleChoice") {
+            if (_questions[index].questionType == "MultipleChoice") {
               return QuestionCard(
                 question: _questions[index],
                 onOptionSelected: (selectedOption) {
                   setState(() {
                     _selectedOptions[index] = selectedOption;
                   });
-                  // Move to the next question after the current one is answered
                   if (selectedOption != null) {
-                    // Check if there are more questions to display
-                   /* if (_currentQuestionIndex < _questions.length) {
+                    if (_currentQuestionIndex < _questions.length) {
                       setState(() {
                         _currentQuestionIndex++;
-                        //   print("_currentQuestionIndex: $_currentQuestionIndex");
                       });
-
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                      WidgetsBinding.instance?.addPostFrameCallback((_) {
                         _scrollToNextPosition();
                       });
-                    } else {
-
-                    }*/
-                    _moveToNextQuestion();
+                    }
                   }
                 },
-                scrollController: _scrollController,
               );
-            } else if (_questions[jsonPosition].questionType == "textInput") {
+            } else if (_questions[index].questionType == "textInput") {
               return TextInputCard(
                 question: _questions[index],
-                onNextPressed: (){
+                onTextChanged: (text) {
+                  // Handle text changes, if needed
+                },
+                onNextPressed: () {
                   _moveToNextQuestion();
                 },
               );
-            } else if (_questions[jsonPosition].questionType == "checkBox") {
-
-            } else if (_questions[jsonPosition].questionType == "numberInput") {
-
             }
           }
+          return Container();
         },
       ),
     );
@@ -120,20 +139,74 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() {
       if (_currentQuestionIndex < _questions.length) {
         _currentQuestionIndex++;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToNextPosition();
-        });
+        int nextQuestionIndex = _findQuestionIndex(_questions[_currentQuestionIndex].referTo);
+        if (nextQuestionIndex != -1) {
+         // _textEditingController.text = _answers[nextQuestionIndex];
+        }
       }
     });
+  }
+
+  int _findQuestionIndex(String referTo) {
+    for (int i = 0; i < _questions.length; i++) {
+      if (_questions[i].id.toString() == referTo) {
+        return i;
+      }
+    }
+    return -1;
+  }
+}
+
+class QuestionCard extends StatelessWidget {
+  final Question question;
+  final ValueChanged<int?> onOptionSelected;
+
+  QuestionCard({
+    required this.question,
+    required this.onOptionSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            question.questionText,
+            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20.0),
+          ListView.builder(
+            controller: _scrollController,
+            shrinkWrap: true,
+            itemCount: question.options.length,
+            itemBuilder: (context, index) {
+              return OptionItem(
+                option: question.options[index],
+                onSelected: () {
+                  onOptionSelected(index);
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 
 class TextInputCard extends StatefulWidget {
   final Question question;
-  final VoidCallback onNextPressed; // Add this line
+  final ValueChanged<String?> onTextChanged;
+  final VoidCallback onNextPressed;
+
   TextInputCard({
     required this.question,
-    required this.onNextPressed, // Add this line
+    required this.onTextChanged,
+    required this.onNextPressed,
   });
 
   @override
@@ -141,6 +214,8 @@ class TextInputCard extends StatefulWidget {
 }
 
 class _TextInputCardState extends State<TextInputCard> {
+  TextEditingController _textEditingController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -157,6 +232,7 @@ class _TextInputCardState extends State<TextInputCard> {
             height: 12,
           ),
           TextField(
+            controller: _textEditingController,
             textAlign: TextAlign.left,
             keyboardType: TextInputType.text,
             decoration: InputDecoration(
@@ -170,6 +246,9 @@ class _TextInputCardState extends State<TextInputCard> {
               ),
               isDense: true,
             ),
+            onChanged: (text) {
+              widget.onTextChanged(text);
+            },
           ),
           SizedBox(
             height: 20,
@@ -192,62 +271,14 @@ class _TextInputCardState extends State<TextInputCard> {
   }
 }
 
-class QuestionCard extends StatefulWidget {
-  final Question question;
-  final ValueChanged<int?> onOptionSelected;
-  final ScrollController scrollController; // Add this line'
-
-  QuestionCard({
-    required this.question,
-    required this.onOptionSelected,
-    required this.scrollController,
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  State<QuestionCard> createState() => _QuestionCardState();
-}
-
-class _QuestionCardState extends State<QuestionCard> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            widget.question.questionText,
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 20.0),
-          ListView.builder(
-            controller: widget.onOptionSelected != null
-                ? null
-                : widget.scrollController,
-            shrinkWrap: true,
-            itemCount: widget.question.options.length,
-            itemBuilder: (context, index) {
-              return OptionItem(
-                option: widget.question.options[index],
-                onSelected: () {
-                  widget.onOptionSelected(index);
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class OptionItem extends StatelessWidget {
   final String option;
   final VoidCallback onSelected;
 
-  OptionItem({required this.option, required this.onSelected});
+  OptionItem({
+    required this.option,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -261,7 +292,7 @@ class OptionItem extends StatelessWidget {
 }
 
 class SubmitCard extends StatefulWidget {
-  const SubmitCard({super.key});
+  const SubmitCard({Key? key}) : super(key: key);
 
   @override
   State<SubmitCard> createState() => _SubmitCardState();

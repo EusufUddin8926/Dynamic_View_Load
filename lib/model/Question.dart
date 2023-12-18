@@ -23,7 +23,7 @@ class Question {
         referTo: "3",
       ),
       Question(
-        id: 1,
+        id: 2,
         questionText:
             'Which programming language is used for Android Development',
         options: [],
@@ -32,7 +32,7 @@ class Question {
       ),
 
       Question(
-        id: 1,
+        id: 3,
         questionText: 'Which programming language is your favourite?',
         options: ['Java', 'Dart', 'Python', 'C#'],
         questionType: "checkBox",
@@ -40,7 +40,7 @@ class Question {
       ),
 
       Question(
-        id: 1,
+        id: 4,
         questionText: 'Give the rating for your favourite language?',
         options: [],
         questionType: "numberInput",
