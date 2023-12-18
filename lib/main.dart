@@ -63,7 +63,7 @@ class _QuizScreenState extends State<QuizScreen> {
           if (index >= _questions.length) {
             return const SubmitCard();
           } else {
-            if (_questions[index].questionType == "MultipleChoice") {
+            if (_questions[jsonPosition].questionType == "MultipleChoice") {
               return QuestionCard(
                 question: _questions[index],
                 onOptionSelected: (selectedOption) {
@@ -73,7 +73,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   // Move to the next question after the current one is answered
                   if (selectedOption != null) {
                     // Check if there are more questions to display
-                    if (_currentQuestionIndex < _questions.length) {
+                   /* if (_currentQuestionIndex < _questions.length) {
                       setState(() {
                         _currentQuestionIndex++;
                         //   print("_currentQuestionIndex: $_currentQuestionIndex");
@@ -82,21 +82,24 @@ class _QuizScreenState extends State<QuizScreen> {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         _scrollToNextPosition();
                       });
-                    } else {}
+                    } else {
+
+                    }*/
+                    _moveToNextQuestion();
                   }
                 },
                 scrollController: _scrollController,
               );
-            } else if (_questions[index].questionType == "textInput") {
+            } else if (_questions[jsonPosition].questionType == "textInput") {
               return TextInputCard(
                 question: _questions[index],
                 onNextPressed: (){
-                  _moveToNextQuestion(_questions, );
+                  _moveToNextQuestion();
                 },
               );
-            } else if (_questions[index].questionType == "checkBox") {
+            } else if (_questions[jsonPosition].questionType == "checkBox") {
 
-            } else if (_questions[index].questionType == "numberInput") {
+            } else if (_questions[jsonPosition].questionType == "numberInput") {
 
             }
           }
@@ -113,19 +116,15 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  void _moveToNextQuestion(List<Question> questions) {
+  void _moveToNextQuestion() {
     setState(() {
       if (_currentQuestionIndex < _questions.length) {
         _currentQuestionIndex++;
-        for(int i = 0;i < questions.length; i++){
-
-        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToNextPosition();
+        });
       }
     });
-  }
-
-  void initialRoute() {
-
   }
 }
 
@@ -135,7 +134,6 @@ class TextInputCard extends StatefulWidget {
   TextInputCard({
     required this.question,
     required this.onNextPressed, // Add this line
-
   });
 
   @override
