@@ -67,11 +67,13 @@ class _QuizScreenState extends State<QuizScreen> {
   int _currentQuestionIndex = 0;
   List<int?> _selectedOptions = List.filled(4, null);
   TextEditingController _textEditingController = TextEditingController();
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _scrollController = ScrollController();
   }
 
   @override
