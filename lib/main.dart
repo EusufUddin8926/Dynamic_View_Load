@@ -33,36 +33,8 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  List<Question> _questions = [
-    Question(
-      id: 1,
-      questionText: 'What is the capital of France?',
-      options: ['Berlin', 'Paris', 'Madrid', 'Rome'],
-      questionType: "MultipleChoice",
-      referTo: "3",
-    ),
-    Question(
-      id: 2,
-      questionText: 'Which programming language is used for Android Development',
-      options: ['Java', 'Dart', 'Python', 'C#'],
-      questionType: "textInput",
-      referTo: "4",
-    ),
-    Question(
-      id: 3,
-      questionText: 'Which programming language is your favourite?',
-      options: [],
-      questionType: "textInput",
-      referTo: "2",
-    ),
-    Question(
-      id: 4,
-      questionText: 'Give the rating for your favourite language?',
-      options: [],
-      questionType: "numberInput",
-      referTo: "Submit",
-    ),
-  ];
+
+  var _questions = Question.getQuestionList();
 
   int _currentQuestionIndex = 0;
   List<int?> _selectedOptions = List.filled(4, null);
@@ -100,6 +72,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Widget buildQuestionWidget(Question question) {
+    print("Question id: ${question.id}");
     switch (question.questionType) {
       case "MultipleChoice":
         return QuestionCard(
@@ -152,6 +125,7 @@ class _QuizScreenState extends State<QuizScreen> {
   void _moveToNextQuestion(String referTo) {
     int nextQuestionIndex = _findQuestionIndex(referTo);
 
+    print("Next Question index is ${nextQuestionIndex}");
     if (nextQuestionIndex != -1) {
       setState(() {
         _currentQuestionIndex = nextQuestionIndex;
@@ -168,7 +142,11 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
- int _findQuestionIndex(String referTo) {
+  int _findQuestionIndex(String referTo) {
+    if (referTo == "Submit") {
+      return _questions.length;
+    }
+
     for (int i = 0; i < _questions.length; i++) {
       if (_questions[i].id.toString() == referTo) {
         return i;
@@ -242,6 +220,9 @@ class _TextInputCardState extends State<TextInputCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Create a new instance of TextEditingController for each TextInputCard
+    _textEditingController = TextEditingController();
+
     return Container(
       padding: EdgeInsets.all(16.0),
       child: Column(
