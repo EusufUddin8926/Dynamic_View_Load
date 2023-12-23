@@ -1,5 +1,5 @@
+import 'package:dynamic_view/model/AnswerModel.dart';
 import 'package:flutter/material.dart';
-
 import 'model/Question.dart';
 
 void main() {
@@ -31,6 +31,7 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
   List<Question> allQuestions = Question.getQuestionList();
   List<Question> displayedQuestions = [];
+  List<AnswerModel> answerModelList = [];
 
   @override
   void initState() {
@@ -61,8 +62,7 @@ class _QuizPageState extends State<QuizPage> {
     if (displayedQuestions.isNotEmpty) {
       int currentQuestionId = displayedQuestions.last.referTo;
       if (currentQuestionId != -1) {
-        Question? nextQuestion =
-            allQuestions.firstWhere((q) => q.id == currentQuestionId);
+        Question? nextQuestion = allQuestions.firstWhere((q) => q.id == currentQuestionId);
         setState(() {
           displayedQuestions.add(nextQuestion);
         });
@@ -112,6 +112,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
               setState(() {
                 _selectedOption = value;
               });
+
             },
           )).toList(),
         ],
