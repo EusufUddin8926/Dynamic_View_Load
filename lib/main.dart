@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'model/Question.dart';
 
@@ -10,7 +9,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,72 +18,50 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: QuizScreen(),
+      home: QuizPage(),
     );
   }
 }
 
-class QuizScreen extends StatefulWidget {
-  const QuizScreen({Key? key}) : super(key: key);
-
+class QuizPage extends StatefulWidget {
   @override
-  _QuizScreenState createState() => _QuizScreenState();
+  _QuizPageState createState() => _QuizPageState();
 }
 
-class _QuizScreenState extends State<QuizScreen> {
-
-  var _questions = Question.getQuestionList();
-
-  int _currentQuestionIndex = 0;
-  List<int?> _selectedOptions = List.filled(4, null);
-  ScrollController _scrollController = ScrollController();
+class _QuizPageState extends State<QuizPage> {
+  List<Question> allQuestions = Question.getQuestionList();
+  List<Question> displayedQuestions = [];
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    _scrollController = ScrollController();
+    if (allQuestions.isNotEmpty) {
+      displayedQuestions.add(allQuestions.first);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Flutter Dynamic List App',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.blue,
-      ),
+      appBar: AppBar(title: const Text('Quiz')),
       body: ListView.builder(
-        addAutomaticKeepAlives: true,
-        itemCount: _currentQuestionIndex + 1,
+        itemCount: displayedQuestions.length,
         itemBuilder: (context, index) {
-          if (index >= _questions.length) {
-            return SubmitCard();
-          } else {
-            return buildQuestionWidget(_questions[index]);
-          }
+          return buildQuestionWidget(displayedQuestions[index]);
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _loadNextQuestion,
+        child: const Icon(Icons.navigate_next),
       ),
     );
   }
 
   Widget buildQuestionWidget(Question question) {
-    print("Question id: ${question.id}");
     switch (question.questionType) {
       case "MultipleChoice":
         return QuestionCard(
           question: question,
-          onOptionSelected: (selectedOption) {
-            setState(() {
-              _selectedOptions[_currentQuestionIndex] = selectedOption;
-            });
-            if (selectedOption != null) {
-              _moveToNextQuestion(question.referTo);
-            }
-          },
-          scrollController: _scrollController,
         );
       case "textInput":
         return TextInputCard(
@@ -94,7 +70,7 @@ class _QuizScreenState extends State<QuizScreen> {
             // Handle text changes, if needed
           },
           onNextPressed: () {
-            _moveToNextQuestion(question.referTo);
+            // _moveToNextQuestion(question.referTo);
           },
         );
       case "checkBox":
@@ -106,66 +82,58 @@ class _QuizScreenState extends State<QuizScreen> {
           onTextChanged: (number) {
             // Handle number changes, if needed
           },
-          onNextPressed: () {
-            _moveToNextQuestion(question.referTo);
-          },
         );
     }
     return Container();
   }
 
-  void _scrollToNextPosition() {
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
-  }
 
-  void _moveToNextQuestion(String referTo) {
-    int nextQuestionIndex = _findQuestionIndex(referTo);
-
-    print("Next Question index is ${nextQuestionIndex}");
-    if (nextQuestionIndex != -1) {
-      setState(() {
-        _currentQuestionIndex = nextQuestionIndex;
-        _scrollToNextPosition();
-      });
-    } else if (referTo == "Submit") {
-      // Handle the case where the next question is the Submit screen
-      setState(() {
-        _currentQuestionIndex++;
-        _scrollToNextPosition();
-      });
-    } else {
-      print("Next question not found for referTo: $referTo");
-    }
-  }
-
-  int _findQuestionIndex(String referTo) {
-    if (referTo == "Submit") {
-      return _questions.length;
-    }
-
-    for (int i = 0; i < _questions.length; i++) {
-      if (_questions[i].id.toString() == referTo) {
-        return i;
+  void _loadNextQuestion() {
+    if (displayedQuestions.isNotEmpty) {
+      int currentQuestionId = displayedQuestions.last.referTo;
+      if (currentQuestionId != -1) {
+        Question? nextQuestion =
+            allQuestions.firstWhere((q) => q.id == currentQuestionId);
+        setState(() {
+          displayedQuestions.add(nextQuestion);
+        });
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("All Done")));
       }
     }
-    return -1;
+  }
+}
+
+class QuestionWidget extends StatelessWidget {
+  final Question question;
+
+  QuestionWidget({required this.question});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        title: Text(question.questionText),
+      ),
+    );
   }
 }
 
 
+
+
+
+
 class QuestionCard extends StatelessWidget {
   final Question question;
-  final ValueChanged<int?> onOptionSelected;
-  final ScrollController scrollController;
+  // final ValueChanged<int?> onOptionSelected;
+  // final ScrollController scrollController;
 
   QuestionCard({
     required this.question,
-    required this.onOptionSelected,
-    required this.scrollController,
+    // required this.onOptionSelected,
+    // required this.scrollController,
   });
 
   @override
@@ -182,14 +150,14 @@ class QuestionCard extends StatelessWidget {
           ),
           SizedBox(height: 20.0),
           ListView.builder(
-            controller: scrollController,
+            // controller: scrollController,
             shrinkWrap: true,
             itemCount: question.options.length,
             itemBuilder: (context, index) {
               return OptionItem(
                 option: question.options[index],
                 onSelected: () {
-                  onOptionSelected(index);
+                  // onOptionSelected(index);
                 },
               );
             },
@@ -281,12 +249,12 @@ class _TextInputCardState extends State<TextInputCard> {
 class NumberInputCard extends StatefulWidget {
   final Question question;
   final ValueChanged<String?> onTextChanged;
-  final VoidCallback onNextPressed;
+  final VoidCallback? onNextPressed;
 
   NumberInputCard({
     required this.question,
     required this.onTextChanged,
-    required this.onNextPressed,
+     this.onNextPressed,
   });
 
   @override
@@ -330,21 +298,6 @@ class _NumberInputCardState extends State<NumberInputCard> {
               widget.onTextChanged(text);
             },
           ),
-          SizedBox(
-            height: 20,
-          ),
-          Align(
-            alignment: Alignment.center,
-            child: MaterialButton(
-              onPressed: widget.onNextPressed,
-              height: 40,
-              minWidth: 100,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: Text("Next", style: TextStyle(color: Colors.white)),
-              color: Colors.blue,
-            ),
-          )
         ],
       ),
     );

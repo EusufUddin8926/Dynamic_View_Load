@@ -1,9 +1,12 @@
+
+
+
 class Question {
   final int id;
   final String questionText;
   final List<String> options;
   final String questionType;
-  final String referTo;
+  final int referTo;
 
   Question({
     required this.id,
@@ -20,30 +23,22 @@ class Question {
         questionText: 'What is the capital of France?',
         options: ['Berlin', 'Paris', 'Madrid', 'Rome'],
         questionType: "MultipleChoice",
-        referTo: "3",
+        referTo: 3,
       ),
       Question(
         id: 2,
-        questionText: 'Which programming language is used for Android Development',
-        options: ['Java', 'Dart', 'Python', 'C#'],
-        questionType: "textInput",
-        referTo: "4",
-      ),
-      Question(
-        id: 3,
         questionText: 'Which programming language is your favourite?',
         options: [],
         questionType: "textInput",
-        referTo: "2",
+        referTo: -1,
       ),
       Question(
-        id: 4,
+        id: 3,
         questionText: 'Give the rating for your favourite language?',
         options: [],
-        questionType: "numberInput",
-        referTo: "Submit",
+        questionType: "textInput",
+        referTo: 2,
       ),
-      // Add more questions as needed
     ];
     return _questions;
   }
