@@ -47,7 +47,7 @@ class _QuizPageState extends State<QuizPage> {
       body: ListView.builder(
         itemCount: displayedQuestions.length,
         itemBuilder: (context, index) {
-          return buildQuestionWidget(displayedQuestions[index]);
+          return QuestionWidget(question: displayedQuestions[index]);
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -56,37 +56,6 @@ class _QuizPageState extends State<QuizPage> {
       ),
     );
   }
-
-  Widget buildQuestionWidget(Question question) {
-    switch (question.questionType) {
-      case "MultipleChoice":
-        return QuestionCard(
-          question: question,
-        );
-      case "textInput":
-        return TextInputCard(
-          question: question,
-          onTextChanged: (text) {
-            // Handle text changes, if needed
-          },
-          onNextPressed: () {
-            // _moveToNextQuestion(question.referTo);
-          },
-        );
-      case "checkBox":
-      // Handle checkBox case
-        break;
-      case "numberInput":
-        return NumberInputCard(
-          question: question,
-          onTextChanged: (number) {
-            // Handle number changes, if needed
-          },
-        );
-    }
-    return Container();
-  }
-
 
   void _loadNextQuestion() {
     if (displayedQuestions.isNotEmpty) {
@@ -105,257 +74,62 @@ class _QuizPageState extends State<QuizPage> {
   }
 }
 
-class QuestionWidget extends StatelessWidget {
+class QuestionWidget extends StatefulWidget {
   final Question question;
 
-  QuestionWidget({required this.question});
+  const QuestionWidget({super.key, required this.question});
+
+  @override
+  _QuestionWidgetState createState() => _QuestionWidgetState();
+}
+
+class _QuestionWidgetState extends State<QuestionWidget> {
+  String? _selectedOption;
 
   @override
   Widget build(BuildContext context) {
+    switch (widget.question.questionType) {
+      case 'MultipleChoice':
+        return _buildMultipleChoiceQuestion(widget.question);
+      case 'textInput':
+        return _buildTextInputQuestion(widget.question);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildMultipleChoiceQuestion(Question question) {
     return Card(
-      child: ListTile(
-        title: Text(question.questionText),
-      ),
-    );
-  }
-}
-
-
-
-
-
-
-class QuestionCard extends StatelessWidget {
-  final Question question;
-  // final ValueChanged<int?> onOptionSelected;
-  // final ScrollController scrollController;
-
-  QuestionCard({
-    required this.question,
-    // required this.onOptionSelected,
-    // required this.scrollController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            question.questionText,
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 20.0),
-          ListView.builder(
-            // controller: scrollController,
-            shrinkWrap: true,
-            itemCount: question.options.length,
-            itemBuilder: (context, index) {
-              return OptionItem(
-                option: question.options[index],
-                onSelected: () {
-                  // onOptionSelected(index);
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class TextInputCard extends StatefulWidget {
-  final Question question;
-  final ValueChanged<int?> onTextChanged;
-  final VoidCallback onNextPressed;
-
-  TextInputCard({
-    required this.question,
-    required this.onTextChanged,
-    required this.onNextPressed,
-  });
-
-  @override
-  State<TextInputCard> createState() => _TextInputCardState();
-}
-
-class _TextInputCardState extends State<TextInputCard> {
-  TextEditingController _textEditingController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    // Create a new instance of TextEditingController for each TextInputCard
-    _textEditingController = TextEditingController();
-
-    return Container(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.question.questionText,
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(
-            height: 12,
-          ),
-          TextField(
-            controller: _textEditingController,
-            textAlign: TextAlign.left,
-            keyboardType: TextInputType.text,
-            decoration: InputDecoration(
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-              isDense: true,
-            ),
-            onChanged: (text) {
-              widget.onTextChanged(text as int?);
+          Text(question.questionText),
+          ...question.options.map((option) => RadioListTile<String>(
+            title: Text(option),
+            value: option,
+            groupValue: _selectedOption,
+            onChanged: (value) {
+              setState(() {
+                _selectedOption = value;
+              });
             },
-          ),
-          SizedBox(
-            height: 20,
-          ),
-          Align(
-            alignment: Alignment.center,
-            child: MaterialButton(
-              onPressed: widget.onNextPressed,
-              height: 40,
-              minWidth: 100,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: Text("Next", style: TextStyle(color: Colors.white)),
-              color: Colors.blue,
-            ),
-          )
+          )).toList(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextInputQuestion(Question question) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: TextFormField(
+          decoration: InputDecoration(
+            labelText: question.questionText,
+          ),
+        ),
       ),
     );
   }
 }
 
-
-
-class NumberInputCard extends StatefulWidget {
-  final Question question;
-  final ValueChanged<String?> onTextChanged;
-  final VoidCallback? onNextPressed;
-
-  NumberInputCard({
-    required this.question,
-    required this.onTextChanged,
-     this.onNextPressed,
-  });
-
-  @override
-  _NumberInputCardState createState() => _NumberInputCardState();
-}
-
-class _NumberInputCardState extends State<NumberInputCard> {
-  TextEditingController _textEditingController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.question.questionText,
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(
-            height: 12,
-          ),
-          TextField(
-            controller: _textEditingController,
-            textAlign: TextAlign.left,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-              isDense: true,
-            ),
-            onChanged: (text) {
-              widget.onTextChanged(text);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-
-class OptionItem extends StatelessWidget {
-  final String option;
-  final VoidCallback onSelected;
-
-  OptionItem({
-    required this.option,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(option),
-      onTap: () {
-        onSelected();
-      },
-    );
-  }
-}
-
-class SubmitCard extends StatefulWidget {
-  const SubmitCard({Key? key}) : super(key: key);
-
-  @override
-  State<SubmitCard> createState() => _SubmitCardState();
-}
-
-class _SubmitCardState extends State<SubmitCard> {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MaterialButton(
-              onPressed: () {
-                setState(() {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(const SnackBar(content: Text("All Done")));
-                });
-              },
-              child: Text("Submit"),
-              color: Colors.blue,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16))),
-        ],
-      ),
-    );
-  }
-}

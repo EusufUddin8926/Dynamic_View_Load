@@ -30,7 +30,7 @@ class Question {
         questionText: 'Which programming language is your favourite?',
         options: [],
         questionType: "textInput",
-        referTo: -1,
+        referTo: 4,
       ),
       Question(
         id: 3,
@@ -38,6 +38,13 @@ class Question {
         options: [],
         questionType: "textInput",
         referTo: 2,
+      ),
+      Question(
+        id: 4,
+        questionText: 'What is the capital of Greece?',
+        options: ['Dhaka', 'Khulna', 'Rajshahi', 'Comilla'],
+        questionType: "MultipleChoice",
+        referTo: -1,
       ),
     ];
     return _questions;
