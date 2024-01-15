@@ -31,7 +31,8 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
   List<Question> allQuestions = Question.getQuestionList();
   List<Question> displayedQuestions = [];
-  List<AnswerModel> answerModelList = [];
+  List<AnswerModel> answers = [];
+  bool allQuestionsAnswered = false;
 
   @override
   void initState() {
@@ -46,29 +47,61 @@ class _QuizPageState extends State<QuizPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Quiz')),
       body: ListView.builder(
-        itemCount: displayedQuestions.length,
+        itemCount: displayedQuestions.length + (allQuestionsAnswered ? 1 : 0),
+        // Add space for the Submit button
         itemBuilder: (context, index) {
-          return QuestionWidget(question: displayedQuestions[index]);
+          if (index < displayedQuestions.length) {
+            return QuestionWidget(
+              question: displayedQuestions[index],
+              onAnswered: _loadNextQuestion,
+            );
+          } else if (allQuestionsAnswered) {
+            return ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(
+                    content: Text(
+                      answers.map((a) => "${a.questionText}: ${a.answerText}").join("\n"),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              },
+              child: const Text("Submit"),
+            );
+          } else {
+            return const SizedBox.shrink();
+          }
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _loadNextQuestion,
-        child: const Icon(Icons.navigate_next),
       ),
     );
   }
 
-  void _loadNextQuestion() {
+  void _loadNextQuestion(AnswerModel answer) {
     if (displayedQuestions.isNotEmpty) {
-      int currentQuestionId = displayedQuestions.last.referTo;
+      int currentQuestionId = displayedQuestions.last.id;
+
+      setState(() {
+        answers.add(answer);
+      });
+
       if (currentQuestionId != -1) {
-        Question? nextQuestion = allQuestions.firstWhere((q) => q.id == currentQuestionId);
-        setState(() {
-          displayedQuestions.add(nextQuestion);
-        });
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("All Done")));
+        int currentIndex =
+            allQuestions.indexWhere((q) => q.id == currentQuestionId);
+
+        if (currentIndex < allQuestions.length - 1) {
+          Question nextQuestion = allQuestions[currentIndex + 1];
+
+          setState(() {
+            displayedQuestions.add(nextQuestion);
+            if (allQuestions.length == displayedQuestions.length) {
+              allQuestionsAnswered = true;
+            }
+          });
+        } else {
+          // ScaffoldMessenger.of(context)
+          //     .showSnackBar(const SnackBar(content: Text("All Done")));
+        }
       }
     }
   }
@@ -76,8 +109,10 @@ class _QuizPageState extends State<QuizPage> {
 
 class QuestionWidget extends StatefulWidget {
   final Question question;
+  final Function(AnswerModel) onAnswered;
 
-  const QuestionWidget({super.key, required this.question});
+  const QuestionWidget(
+      {super.key, required this.question, required this.onAnswered});
 
   @override
   _QuestionWidgetState createState() => _QuestionWidgetState();
@@ -85,6 +120,7 @@ class QuestionWidget extends StatefulWidget {
 
 class _QuestionWidgetState extends State<QuestionWidget> {
   String? _selectedOption;
+  TextEditingController _textEditingController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -104,17 +140,21 @@ class _QuestionWidgetState extends State<QuestionWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(question.questionText),
-          ...question.options.map((option) => RadioListTile<String>(
-            title: Text(option),
-            value: option,
-            groupValue: _selectedOption,
-            onChanged: (value) {
-              setState(() {
-                _selectedOption = value;
-              });
+          ...question.options
+              .map((option) => RadioListTile<String>(
+                    title: Text(option),
+                    value: option,
+                    groupValue: _selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedOption = value;
+                      });
 
-            },
-          )).toList(),
+                      widget.onAnswered(AnswerModel(question.id,
+                          question.questionText, _selectedOption!));
+                    },
+                  ))
+              .toList(),
         ],
       ),
     );
@@ -124,13 +164,23 @@ class _QuestionWidgetState extends State<QuestionWidget> {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: TextFormField(
-          decoration: InputDecoration(
-            labelText: question.questionText,
-          ),
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _textEditingController,
+              decoration: InputDecoration(
+                labelText: question.questionText,
+              ),
+            ),
+            ElevatedButton(
+                onPressed: () {
+                  widget.onAnswered(AnswerModel(question.id,
+                      question.questionText, _textEditingController.text));
+                },
+                child: const Text("Next")),
+          ],
         ),
       ),
     );
   }
 }
-
