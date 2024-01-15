@@ -79,18 +79,14 @@ class _QuizPageState extends State<QuizPage> {
 
   void _loadNextQuestion(AnswerModel answer) {
     if (displayedQuestions.isNotEmpty) {
-      int currentQuestionId = displayedQuestions.last.id;
+      int currentQuestionId = displayedQuestions.last.referTo;
 
       setState(() {
         answers.add(answer);
       });
 
       if (currentQuestionId != -1) {
-        int currentIndex =
-            allQuestions.indexWhere((q) => q.id == currentQuestionId);
-
-        if (currentIndex < allQuestions.length - 1) {
-          Question nextQuestion = allQuestions[currentIndex + 1];
+        Question? nextQuestion = allQuestions.firstWhere((q) => q.id == currentQuestionId);
 
           setState(() {
             displayedQuestions.add(nextQuestion);
@@ -98,12 +94,8 @@ class _QuizPageState extends State<QuizPage> {
               allQuestionsAnswered = true;
             }
           });
-        } else {
-          // ScaffoldMessenger.of(context)
-          //     .showSnackBar(const SnackBar(content: Text("All Done")));
         }
       }
-    }
   }
 }
 
